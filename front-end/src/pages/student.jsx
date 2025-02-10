@@ -1,42 +1,38 @@
-import React,{ useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios  from 'axios';
-import { useState } from "react";
+import axios from 'axios';
 
-export default function Student(){
-
-    useEffect(() => {
-        
-        axios.get('http://127.0.0.1:8000/api/students').then(res => {
-            setStudent(res.data)
-            console.log(res)
-            
-        })
-  
-
-
-    },[]);
-
-    // const idStudent = 1
-    // const[showStudent,setShowStudent] = useState([1])
-    const[students,setStudent] = useState([])
+export default function Student() {
+    // Initialize state as an empty array
+    const [students, setStudents] = useState([]);
     
+    useEffect(() => {
+        axios.get('http://127.0.0.1:8000/api/student')
+            .then(res => {
+                // Make sure we're setting the state with the correct data
+                // Often the API response data is nested under a data property
+                setStudents(Array.isArray(res.data) ? res.data : res.data.data);
+            })
+            .catch(error => {
+                console.error("Error fetching students:", error);
+                setStudents([]); // Set empty array on error
+            });
+    }, []);
 
-
-    return(
+    return (
         <div className="container">
             <div className="row">
                 <div className="col-md-12">
                     <div className="card">
-                        <div className="student-header">
+                        <div className="card-header">
                             <h4>
                                 Student List 
-                                <Link to="/student" className="btn btn-info float-end">Add student</Link>
+                                <Link to="/student/create" className="btn btn-primary float-end">Add Student</Link>
                             </h4>
                         </div>
 
                         <div className="card-body">
-                            <table className="table table-stripped">
+                            <table className="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -50,16 +46,23 @@ export default function Student(){
                                 </thead>
 
                                 <tbody>
-                                    {students.map(student => <tr key={student.id}>
-                                        <td >{student.id}</td>
-                                        <td>{student.name}</td>
-                                        <td>{student.course}</td>
-                                        <td>{student.email}</td>
-                                        <td>{student.phone}</td>
-                                        <td><button className="btn btn-primary">Edit</button></td>
-                                        <td><button className="btn btn-danger">Delete</button></td>
-                                        </tr>)}
-                                  
+                                    {Array.isArray(students) && students.length > 0 ? (
+                                        students.map(student => (
+                                            <tr key={student.id}>
+                                                <td>{student.id}</td>
+                                                <td>{student.name}</td>
+                                                <td>{student.course}</td>
+                                                <td>{student.email}</td>
+                                                <td>{student.phone}</td>
+                                                <td><button className="btn btn-primary">Edit</button></td>
+                                                <td><button className="btn btn-danger">Delete</button></td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="7" className="text-center">No students found</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
