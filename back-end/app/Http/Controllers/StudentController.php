@@ -81,7 +81,27 @@ class StudentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        return Student::findOrFail($id)->update($request->all());
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'course' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->messages()
+            ], 422);
+        }
+
+        $student = Student::findOrFail($id);
+        $student->update($request->all());
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Student Updated Successfully'
+        ]);
     }
 
     /**
@@ -90,5 +110,12 @@ class StudentController extends Controller
     public function destroy(string $id)
     {
         return Student::findOrFail($id)->delete();
+    }
+
+    public function search($name){
+        return Student::where('name', 'like', '%' . $name . '%')
+                        ->orWhere('course', 'like', '%'.$name.'%')
+                        ->orWhere('email', 'like', '%'.$name.'%')->get();
+                        
     }
 }

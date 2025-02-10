@@ -1,73 +1,86 @@
 import axios from "axios";
-import React, { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/loading";
 
-export default function Add_Student() {
-    
+export default function Update_Student() {
+    // Get the student ID from the URL parameters
+    const { id } = useParams();
+    // Hook for navigating programmatically
+    const navigate = useNavigate();
+
+    // State to hold student data
     const [student, setStudent] = useState({
         name: "",
         course: "",
         email: "",
         phone: "",
     });
-    
-    const navigate = useNavigate();
+    // State to hold form validation errors
     const [inputError, setError] = useState({});
-    const [loading, setLoading] = useState(false); // <-- Added loading state
+    // State to track loading status
+    const [loading, setLoading] = useState(true);
 
-    // Handle input field change
+    // Fetch student data from the API when the component mounts or when the 'id' changes
+    useEffect(() => {
+        axios.get(`http://127.0.0.1:8000/api/student/${id}`)
+            .then(res => {
+                console.log("API Response:", res.data); // Debugging log
+                setStudent(res.data.student || res.data); // Handle missing 'student' object
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error("Error fetching student:", error);
+                setLoading(false);
+            });
+    }, [id]);
+
+    // Function to handle input changes and update state dynamically
     const handleInput = (e) => {
-        e.persist();
         setStudent({ ...student, [e.target.name]: e.target.value });
     };
 
-    // Submit data to server
-    const saveStudent = (e) => {
-        e.preventDefault();
-        setLoading(true); // Start loading
+    // Function to handle form submission and update student data
+    const updateStudent = (e) => {
+        e.preventDefault(); // Prevent form from reloading the page
+        setLoading(true); // Set loading to true while processing
 
-        const data = {
-            name: student.name,
-            course: student.course,
-            email: student.email,
-            phone: student.phone,
-        };
-
-        axios.post('http://127.0.0.1:8000/api/student', data)
+        axios.put(`http://127.0.0.1:8000/api/student/${id}`, student)
             .then(res => {
-                alert(res.data.message);
-                setStudent({ name: "", course: "", email: "", phone: "" }); // Reset form
-                setError({});
-                navigate('/student');
+                alert(res.data.message); // Show success message
+                navigate('/student'); // Redirect to student list page
             })
             .catch(error => {
                 if (error.response && error.response.status === 422) {
-                    setError(error.response.data.errors);
+                    setError(error.response.data.errors); // Set validation errors
                 }
             })
-            .finally(() => {
-                setLoading(false); // Stop loading
-            });
+            .finally(() => setLoading(false)); // Reset loading status
     };
 
+    // Show a loading spinner while data is being fetched
+    if (loading) {
+        return <Loading />;
+    }
+
+   
+
     return (
+        
         <div className="container mt-5">
             <div className="card">
                 <div className="card-header">
-                    <h4>Add Student 
+                    <h4>Update Student
                         <span>
                             <Link to="/student">
                                 <button className="btn btn-secondary float-end m-0">Back</button>
                             </Link>
                         </span>
-                    </h4> 
+                    </h4>
                 </div>
-                {/* Show Loading if true */}
-                {loading && <Loading />}
+
                 <div className="card-body">
-                    
-                    <form onSubmit={saveStudent}>
+                    <form onSubmit={updateStudent}>
                         <div className="form-group mb-3">
                             <label>Name</label>
                             <input type="text" className="form-control" name="name" value={student.name} onChange={handleInput} placeholder="Enter Name" />
@@ -94,7 +107,7 @@ export default function Add_Student() {
 
                         <div className="form-group mb-3">
                             <button className="btn btn-primary" disabled={loading}>
-                                {loading ? "Adding..." : "Add Student"}
+                                {loading ? "Updating..." : "Update Student"}
                             </button>
                         </div>
                     </form>
