@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import Loading from "../components/loading";
 
 export default function Student() {
     // Initialize state as an empty array
     const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
     
     useEffect(() => {
         axios.get('http://127.0.0.1:8000/api/student')
@@ -12,12 +14,19 @@ export default function Student() {
                 // Make sure we're setting the state with the correct data
                 // Often the API response data is nested under a data property
                 setStudents(Array.isArray(res.data) ? res.data : res.data.data);
+                setLoading(false);
             })
             .catch(error => {
                 console.error("Error fetching students:", error);
                 setStudents([]); // Set empty array on error
             });
     }, []);
+
+    if(loading) { 
+        return (
+           <Loading />
+        ); 
+    }
 
     return (
         <div className="container">
